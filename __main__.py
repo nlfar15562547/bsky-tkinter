@@ -44,10 +44,12 @@ LOGINPOPUP.mainloop()
 
 print("login successful")
 print(CLIENTPROFILE.display_name)
+utils.CLIENT = CLIENT
 
 
 #----------------MAIN UI (COPIED FROM appbox.py)------------------#
 root = tk.Tk()
+root.geometry("800x600")
 # root is a frame managed by the designer. create widgets inside it.
 FEEDFRAME = tk.Frame(root)
 POSTFRAME = tk.Frame(root)
@@ -68,7 +70,13 @@ FEEDSCROLLcanvas.configure(yscrollcommand=FEEDSCROLLscroller.set)
 def checkScroll():
     start, end = FEEDSCROLLcanvas.yview()
     if end == 1.0:
-        print("load here!")
+        global TIMELINE
+        if TIMELINE.cursor == None:
+            messagebox.showwarning("feed error", "you've reached the end of your feed!")
+        timeline = CLIENT.app.bsky.feed.get_timeline(params={"cursor": TIMELINE.cursor})
+        for item in TIMELINE.feed:
+            POSTS.append(post.Post(FEEDSCROLLframe, item, utils.Utils))
+            POSTS[-1].getFrame().pack(fill="x", pady=5, padx=5)
 def _onMouseWheel(event):
     FEEDSCROLLcanvas.yview_scroll(int(-1*(event.delta/120)), "units")
     checkScroll()
@@ -139,6 +147,6 @@ TIMELINE = CLIENT.app.bsky.feed.get_timeline()
 POSTS = []
 for item in TIMELINE.feed:
     POSTS.append(post.Post(FEEDSCROLLframe, item, utils.Utils))
-    POSTS[-1].getFrame().pack()
+    POSTS[-1].getFrame().pack(fill="x", pady=5, padx=5)
 
 root.mainloop()

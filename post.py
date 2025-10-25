@@ -10,9 +10,9 @@ class Post:
         self.frame = tk.Frame(parent,
             highlightbackground="grey",
             highlightcolor="grey",
-            highlightthickness=2
+            highlightthickness=2,
+            bg=f"#FFFFaa"
         )
-
         self.buildUI()
 
     def buildUI(self):
@@ -24,12 +24,13 @@ class Post:
         handle = getattr(author, "handle", "@unknown")
         text = getattr(record, "text", "(no content)")
         uri = getattr(post, "uri", None)
+        cid = getattr(post, "cid", None)
 
         # top labels
         userLabel = ttk.Label(self.frame, text=displayName)
         handleLabel = ttk.Label(self.frame, text=f"@{handle}")
-        userLabel.pack(anchor="nw", padx=10)
-        handleLabel.pack(anchor="n", padx=10)
+        userLabel.pack(anchor="nw", padx=10, fill="x")
+        handleLabel.pack(anchor="n", padx=10, fill="x")
 
         # post text
         msg = tk.Message(self.frame,
@@ -39,7 +40,7 @@ class Post:
             highlightthickness=2,
             aspect=300
         )
-        msg.pack(anchor="center", pady=(5, 5))
+        msg.pack(anchor="center", pady=(5, 5), fill="x")
 
         # interaction bar
         interactFrame = tk.Frame(self.frame)
@@ -47,17 +48,17 @@ class Post:
         likeButton = tk.Button(
             interactFrame,
             text="\U0001f90d",
-            command=lambda: self.utils.get("like", self.noop)(uri)
+            command=lambda: self.utils.get("like", self.noop)(uri, cid)
         )
         repostButton = tk.Button(
             interactFrame,
             text="\U0001F504",
-            command=lambda: self.utils.get("repost", self.noop)(uri)
+            command=lambda: self.utils.get("repost", self.noop)(uri, cid)
         )
         replyButton = tk.Button(
             interactFrame,
             text="\U0001f4ac",
-            command=lambda: self.utils.get("reply", self.noop)(uri)
+            command=lambda: self.utils.get("reply", self.noop)(uri, cid)
         )
 
         likeButton.pack(side="left", padx=10)
@@ -87,11 +88,14 @@ class Post:
         )
         otherMenuButton.pack(side="left", padx=10)
 
-        interactFrame.pack(pady=(5, 5))
-        self.frame.pack_propagate(False)
+        interactFrame.pack(pady=(5, 5), fill="x")
+        # self.frame.pack_propagate(False)
 
     def noop(self, *args, **kwargs):
         pass
 
     def getFrame(self):
         return self.frame
+    
+    def __str__(self):
+        return "Post(\n" + str(self.parent) + ",\n" + str(self.feedItem) + ",\n" + str(self.utils) + ",\n)"
