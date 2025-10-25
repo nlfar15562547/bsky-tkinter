@@ -18,11 +18,16 @@ def build_ui(root):
     FEEDSCROLLcanvas = tk.Canvas(FEEDSCROLLcontainer)
     FEEDSCROLLscroller = tk.Scrollbar(FEEDSCROLLcontainer)    
     FEEDSCROLLframe = tk.Frame(FEEDSCROLLcanvas)
-    FEEDSCROLLwind = FEEDSCROLLcanvas.create_window((0, 0), window=FEEDSCROLLframe, anchor="nw")
+    FEEDSCROLLwindow = FEEDSCROLLcanvas.create_window((0, 0), window=FEEDSCROLLframe, anchor="nw")
     FEEDSCROLLcanvas.configure(yscrollcommand=FEEDSCROLLscroller.set)
 
+    def checkScroll():
+        start, end = FEEDSCROLLcanvas.yview()
+        if end == 1.0:
+            print("load here!")
     def _onMouseWheel(event):
         FEEDSCROLLcanvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        checkScroll()
     def _updateScrollRegion(event):
         FEEDSCROLLcanvas.configure(scrollregion=FEEDSCROLLcanvas.bbox("all"))
     def onCanvasConfigure(event):
@@ -36,18 +41,18 @@ def build_ui(root):
     FEEDSCROLLscroller.pack(side="right",fill="y")
     # FEEDSCROLLframe.pack() <- FUCKASS LINE THAT KILLS YOUR CODE!!!! EVIL!!!! DO NOT USE!!!!
     
-    """
+    # """
     # placeholder subframes
-    for i in range(2):
+    for i in range(100):
         sub = tk.Frame(FEEDSCROLLframe, bg=f"#FFFFaa", bd=2, relief="ridge")
         sub.pack(fill="x", pady=5, padx=5)
         tk.Label(sub, text=f"frame {i}", bg=sub["bg"]).pack(side="left", padx=10)
         tk.Button(sub, text="click").pack(side="right", padx=10)
-    """
+    # """
 
     #----------------sidebar time!!!----------------#
     INFOFRAME = tk.Frame(POSTFRAME)
-    WRITERFRAME = tk.Frame(POSTFRAME, bg="purple")
+    WRITERFRAME = tk.Frame(POSTFRAME)
     # left 66%
     INFOFRAME.place(relx=0, rely=0, relwidth=1, relheight=0.66)
     # right 33%
