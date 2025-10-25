@@ -49,7 +49,7 @@ def reply(uri, cid):
     def sendReply():
         text = textBox.get("1.0", "end").strip()
         if not text:
-            messagebox.showwarning("empty", "reply cannot be empty")
+            messagebox.showwarning("empty", "reply cannot be empty!")
             return
         try:
             CLIENT.app.bsky.feed.post.create(

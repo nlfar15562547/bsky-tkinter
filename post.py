@@ -11,7 +11,7 @@ class Post:
             highlightbackground="grey",
             highlightcolor="grey",
             highlightthickness=2,
-            bg=f"#FFFFaa"
+            # bg=f"#FFFFaa"
         )
         self.buildUI()
 

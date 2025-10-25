@@ -18,7 +18,7 @@ def setupClient(username, password):
     global CLIENT
     global CLIENTPROFILE
     CLIENTPROFILE = CLIENT.login(username, password)
-    print(CLIENTPROFILE)
+    # print(CLIENTPROFILE)
 
 def trySetupClient():
     try:
@@ -129,11 +129,34 @@ highlightthickness=2
 WRITERCONTAINER.pack(fill="both", expand=True)
 WRITERFOOTERRACK = tk.Frame(WRITERCONTAINER)
 WRITERFOOTERRACK.pack(fill="x", side="bottom")
-WRITERPOSTBUTTON = tk.Button(WRITERFOOTERRACK, text="Post")
+
+
+def sendPost():
+    text = WRITERBOX.get("1.0", "end-1c").strip()
+    if not text:
+        messagebox.showwarning("empty", "post cannot be empty!")
+        return
+    try:
+        CLIENT.app.bsky.feed.post.create(
+            repo=CLIENT.me.did,
+            record={
+                "text": text,
+                "createdAt": utils.nowIso(),
+            }
+        )
+        print("posted")
+        WRITERBOX.delete("1.0", "end")
+        WRITERREMAININGCHARA["text"] = "0"
+        WRITERREMAININGCHARA["fg"] = "black"
+    except Exception as e:
+        messagebox.showerror("error", f"post failed: {e}")
+
+
+WRITERPOSTBUTTON = tk.Button(WRITERFOOTERRACK, text="Post", command=sendPost)
 WRITERPOSTBUTTON.pack(side="right", padx=5,pady=5)
 WRITERBOX = tk.Text(WRITERCONTAINER)
 WRITERBOX.pack(fill="both", expand=True)
-WRITERREMAININGCHARA = tk.Label(WRITERFOOTERRACK, text="-1984", fg="red")
+WRITERREMAININGCHARA = tk.Label(WRITERFOOTERRACK, text="320", fg="black")
 WRITERREMAININGCHARA.pack(side="left", padx=5)
 #----------------MAIN UI (COPIED FROM appbox.py)------------------#
 
@@ -148,5 +171,18 @@ POSTS = []
 for item in TIMELINE.feed:
     POSTS.append(post.Post(FEEDSCROLLframe, item, utils.Utils))
     POSTS[-1].getFrame().pack(fill="x", pady=5, padx=5)
+
+#----------------------postbox logic lmao------------------------#
+
+def remainingText(event):
+    content = WRITERBOX.get("1.0", "end-1c")
+    WRITERREMAININGCHARA["text"] = str(320 - len(content))
+    if len(content) >= 320:
+        WRITERREMAININGCHARA["fg"] = "red"
+    else:
+        WRITERREMAININGCHARA["fg"] = "black"
+    WRITERBOX.edit_modified(False)
+
+WRITERBOX.bind("<<Modified>>", remainingText)
 
 root.mainloop()
