@@ -66,17 +66,49 @@ FEEDSCROLLscroller = tk.Scrollbar(FEEDSCROLLcontainer)
 FEEDSCROLLframe = tk.Frame(FEEDSCROLLcanvas)
 FEEDSCROLLwindow = FEEDSCROLLcanvas.create_window((0, 0), window=FEEDSCROLLframe, anchor="nw")
 FEEDSCROLLcanvas.configure(yscrollcommand=FEEDSCROLLscroller.set)
+LOCK = False
 
 def checkScroll():
     start, end = FEEDSCROLLcanvas.yview()
     if end == 1.0:
         global TIMELINE
-        if TIMELINE.cursor == None:
+        global LOCK
+        
+        if LOCK == True:
+            print("stop it")
+            return
+        LOCK = True
+        if TIMELINE.cursor is None:
             messagebox.showwarning("feed error", "you've reached the end of your feed!")
-        timeline = CLIENT.app.bsky.feed.get_timeline(params={"cursor": TIMELINE.cursor})
-        for item in TIMELINE.feed:
+            return
+        print("trying to load!!")
+        TIMELINEnew = CLIENT.app.bsky.feed.get_timeline(params={"cursor": TIMELINE.cursor})
+        TIMELINE.feed.extend(TIMELINEnew.feed)
+        TIMELINE.cursor = TIMELINEnew.cursor
+        
+        FEEDUPDATEPOPUP = tk.Toplevel()
+        FEEDUPDATEPOPUPLOADER = ttk.Progressbar(FEEDUPDATEPOPUP, orient="horizontal", mode="determinate", length = 200)
+        FEEDUPDATEPOPUPLOADER.pack()
+        FEEDUPDATEPOPUP.update_idletasks()
+        FEEDUPDATEPOPUPLOADER.update_idletasks()
+        FEEDUPDATEPOPUP.update()
+        FEEDUPDATEPOPUPLOADER.update()
+        
+        FEEDUPDATEPOPUP.grab_set()
+        FEEDUPDATEPOPUP.focus_force()
+        FEEDUPDATEPOPUP.transient()
+        
+        FEEDUPDATEPOPUP.update()
+        
+        FEEDUPDATEPOPUPLOADER["maximum"] = len(TIMELINEnew.feed)
+        for index, item in enumerate(TIMELINEnew.feed):
             POSTS.append(post.Post(FEEDSCROLLframe, item, utils.Utils))
             POSTS[-1].getFrame().pack(fill="x", pady=5, padx=5)
+            FEEDUPDATEPOPUPLOADER["value"] = index
+            FEEDUPDATEPOPUP.update_idletasks()
+            FEEDUPDATEPOPUPLOADER.update_idletasks()
+        FEEDUPDATEPOPUP.destroy()
+        LOCK = False
 def _onMouseWheel(event):
     FEEDSCROLLcanvas.yview_scroll(int(-1*(event.delta/120)), "units")
     checkScroll()
@@ -166,11 +198,13 @@ INFOFOLLOWINGTEXT["text"] = str(CLIENTPROFILE.follows_count) + " follows"
 INFOPOSTSTEXT["text"] = str(CLIENTPROFILE.posts_count) + " posts"
 
 TIMELINE = CLIENT.app.bsky.feed.get_timeline()
-
 POSTS = []
+"""
 for item in TIMELINE.feed:
     POSTS.append(post.Post(FEEDSCROLLframe, item, utils.Utils))
     POSTS[-1].getFrame().pack(fill="x", pady=5, padx=5)
+"""
+checkScroll() # should populate the feed because i haven't actually put anything in the frame yet
 
 #----------------------postbox logic lmao------------------------#
 

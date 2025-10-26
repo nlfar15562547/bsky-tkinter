@@ -1,17 +1,21 @@
 import tkinter as tk
 from tkinter import ttk
+import io
+import requests
+from PIL import Image, ImageTk
 
 class Post:
     def __init__(self, parent, feedItem, utils):
         self.feedItem = feedItem
         self.utils = utils
         self.parent = parent
+        self.imageRefs = []  # pretend to care about the images because otherwise garbage collector eats them
 
-        self.frame = tk.Frame(parent,
+        self.frame = tk.Frame(
+            parent,
             highlightbackground="grey",
             highlightcolor="grey",
             highlightthickness=2,
-            # bg=f"#FFFFaa"
         )
         self.buildUI()
 
@@ -33,7 +37,8 @@ class Post:
         handleLabel.pack(anchor="n", padx=10, fill="x")
 
         # post text
-        msg = tk.Message(self.frame,
+        msg = tk.Message(
+            self.frame,
             text=text,
             highlightbackground="grey",
             highlightcolor="grey",
@@ -41,6 +46,9 @@ class Post:
             aspect=300
         )
         msg.pack(anchor="center", pady=(5, 5), fill="x")
+
+        # try to render any image embeds
+        self.renderEmbeds(post)
 
         # interaction bar
         interactFrame = tk.Frame(self.frame)
@@ -72,8 +80,14 @@ class Post:
         otherMenu.add_separator()
         otherMenu.add_command(label="Follow User", command=lambda: self.utils.get("follow", self.noop)(author.did))
         otherMenu.add_separator()
+        otherMenu.add_command(label="i haven't implemented these yet", command=self.noop)
+        otherMenu.add_separator()
         otherMenu.add_command(label="Hide Post", command=lambda: self.utils.get("hide", self.noop)(uri))
         otherMenu.add_command(label="Block User", command=lambda: self.utils.get("block", self.noop)(author.did))
+        
+        otherMenu.entryconfig("i haven't implemented these yet", state="disabled")
+        otherMenu.entryconfig("Hide Post", state="disabled")
+        otherMenu.entryconfig("Block User", state="disabled")
 
         def showOtherMenu():
             x = otherMenuButton.winfo_rootx()
@@ -89,7 +103,29 @@ class Post:
         otherMenuButton.pack(side="left", padx=10)
 
         interactFrame.pack(pady=(5, 5), fill="x")
-        # self.frame.pack_propagate(False)
+
+    def renderEmbeds(self, post):
+        embed = getattr(post, "embed", None)
+        if not embed:
+            return
+
+        if hasattr(embed, "images"):
+            for img in embed.images:
+                url = getattr(img, "thumb", None) or getattr(img, "fullsize", None)
+                if not url:
+                    continue
+                try:
+                    resp = requests.get(url, timeout=10)
+                    resp.raise_for_status()
+                    pilImg = Image.open(io.BytesIO(resp.content))
+                    pilImg.thumbnail((400, 400))  # resize
+                    tkImg = ImageTk.PhotoImage(pilImg)
+
+                    imgLabel = tk.Label(self.frame, image=tkImg)
+                    imgLabel.pack(pady=(5, 5))
+                    self.imageRefs.append(tkImg)  # keep reference
+                except Exception as e:
+                    print("failed to load image:", e)
 
     def noop(self, *args, **kwargs):
         pass
@@ -97,5 +133,6 @@ class Post:
     def getFrame(self):
         return self.frame
     
+
     def __str__(self):
         return "Post(\n" + str(self.parent) + ",\n" + str(self.feedItem) + ",\n" + str(self.utils) + ",\n)"
